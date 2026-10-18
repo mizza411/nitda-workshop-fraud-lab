@@ -9,5 +9,6 @@
   "version": "2",
   "sessionId": "workshop-default",
   "openingSessionId": "workshop-opening",
+  "openingQ2SessionId": "workshop-opening-q2",
   "databaseURL": "https://nitda-workshop-verdict-default-rtdb.firebaseio.com"
 }
