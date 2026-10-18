@@ -1,0 +1,12 @@
+{
+  "projectId": "nitda-workshop-verdict",
+  "appId": "1:222163729410:web:6101fcb2123cbca27cbb1b",
+  "storageBucket": "nitda-workshop-verdict.firebasestorage.app",
+  "apiKey": "AIzaSyACL6tWkvdKWs7b4TlRwCQWWjygr0hmSe4",
+  "authDomain": "nitda-workshop-verdict.firebaseapp.com",
+  "messagingSenderId": "222163729410",
+  "projectNumber": "222163729410",
+  "version": "2",
+  "sessionId": "workshop-default",
+  "databaseURL": "https://nitda-workshop-verdict-default-rtdb.firebaseio.com"
+}

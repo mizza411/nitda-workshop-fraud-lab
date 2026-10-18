@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verdict results — projector</title>
+  <style>
+    :root { --green: #079247; --ink: #111; --muted: #5a6870; --soft: #e8f5ee; }
+    body { margin: 0; font-family: Verdana, Geneva, sans-serif; background: #fff; color: var(--ink); }
+    header { background: var(--green); color: #fff; padding: 1.5rem 1.5rem 1.25rem; }
+    header h1 { margin: 0; font-size: 2rem; }
+    header p { margin: 0.5rem 0 0; opacity: 0.95; }
+    main { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+    .bar-row { margin-bottom: 1.4rem; }
+    .bar-label { display: flex; justify-content: space-between; font-size: 1.35rem; font-weight: 700; color: var(--green); margin-bottom: 0.4rem; }
+    .bar-track { background: var(--soft); border-radius: 10px; height: 28px; overflow: hidden; }
+    .bar-fill { background: var(--green); height: 100%; width: 0; transition: width 0.3s ease; }
+    #total { margin-top: 1rem; font-size: 1.2rem; color: var(--muted); }
+    .err { color: #7a1f1f; margin-top: 1rem; }
+    a { color: var(--green); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Live verdict</h1>
+    <p>Match · No match · Walk away</p>
+  </header>
+  <main>
+    <div class="bar-row" data-k="match"><div class="bar-label"><span>Match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    <div class="bar-row" data-k="no_match"><div class="bar-label"><span>No match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    <div class="bar-row" data-k="walk_away"><div class="bar-label"><span>Walk away</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    <div id="total">Votes: 0</div>
+    <p class="err" id="err" hidden></p>
+    <p><a href="poll.html">Open vote page</a></p>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    const KEYS = ["match", "no_match", "walk_away"];
+    const errEl = document.getElementById("err");
+
+    let config;
+    try {
+      const cfgUrl = new URL("./firebase_config.json", window.location.href);
+      cfgUrl.searchParams.set("v", "3");
+      const res = await fetch(cfgUrl.toString(), { cache: "no-store" });
+      if (!res.ok) throw new Error("config HTTP " + res.status);
+      config = await res.json();
+      if (!config.apiKey || !config.projectId) throw new Error("config incomplete");
+      if (String(config.apiKey).includes("REPLACE")) throw new Error("config still placeholder");
+    } catch (e) {
+      errEl.hidden = false;
+      errEl.textContent = "Could not load Firebase config (" + (e && e.message ? e.message : e) + "). Hard-refresh this page.";
+      throw e;
+    }
+
+    const app = initializeApp(config);
+    const db = getFirestore(app);
+    const sessionId = config.sessionId || "workshop-default";
+    const counts = { match: 0, no_match: 0, walk_away: 0 };
+
+    function paint() {
+      const total = KEYS.reduce((s, k) => s + (Number(counts[k]) || 0), 0);
+      const denom = total || 1;
+      KEYS.forEach((k) => {
+        const row = document.querySelector(`.bar-row[data-k="${k}"]`);
+        const n = Number(counts[k]) || 0;
+        row.querySelector(".n").textContent = String(n);
+        row.querySelector(".bar-fill").style.width = `${Math.round((n / denom) * 100)}%`;
+      });
+      document.getElementById("total").textContent = "Votes: " + total;
+    }
+
+    KEYS.forEach((k) => {
+      onSnapshot(doc(db, "polls", sessionId, "counts", k), (snap) => {
+        counts[k] = snap.exists() ? Number(snap.data().n) || 0 : 0;
+        paint();
+      });
+    });
+  </script>
+</body>
+</html>

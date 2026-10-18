@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verdict poll — NITDA workshop</title>
+  <style>
+    :root { --green: #079247; --ink: #111; --muted: #5a6870; --soft: #e8f5ee; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Verdana, Geneva, sans-serif; color: var(--ink); background: #fff; }
+    header { background: var(--green); color: #fff; padding: 1.1rem 1.25rem; }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 0.4rem 0 0; font-size: 0.9rem; opacity: 0.95; }
+    main { max-width: 560px; margin: 0 auto; padding: 1.25rem; }
+    .hint { color: var(--muted); font-size: 0.95rem; line-height: 1.45; margin-bottom: 1rem; }
+    .verdict { display: grid; gap: 0.65rem; }
+    button.btn {
+      background: var(--green); color: #fff; border: 0; border-radius: 10px; padding: 1rem;
+      font-family: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+    }
+    button.btn:disabled { opacity: 0.55; cursor: default; }
+    #status { margin-top: 1rem; font-weight: 700; color: var(--green); min-height: 1.4rem; }
+    #live { margin-top: 1.5rem; background: var(--soft); border-radius: 12px; padding: 1rem; }
+    #live h2 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--green); }
+    .bar-row { margin-bottom: 0.65rem; }
+    .bar-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    .bar-track { background: #fff; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid #d5e5db; }
+    .bar-fill { background: var(--green); height: 100%; width: 0; transition: width 0.25s ease; }
+    .err { color: #7a1f1f; font-size: 0.9rem; margin-top: 0.75rem; }
+    a { color: var(--green); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Verdict poll</h1>
+    <p>After the lab checks — one pick for the room</p>
+  </header>
+  <main>
+    <p class="hint">
+      Match = names line up. No match = something fails. Walk away = stop before you pay.
+      Your phone sends one vote to the shared room tally.
+    </p>
+    <div class="verdict">
+      <button type="button" class="btn" data-v="match">Match</button>
+      <button type="button" class="btn" data-v="no_match">No match</button>
+      <button type="button" class="btn" data-v="walk_away">Walk away</button>
+    </div>
+    <div id="status"></div>
+    <div id="live">
+      <h2>Live room tally</h2>
+      <div class="bar-row" data-k="match"><div class="bar-label"><span>Match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+      <div class="bar-row" data-k="no_match"><div class="bar-label"><span>No match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+      <div class="bar-row" data-k="walk_away"><div class="bar-label"><span>Walk away</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    </div>
+    <p class="err" id="err" hidden></p>
+    <p class="hint" style="margin-top:1.25rem">
+      Lab stays separate:
+      <a href="../index.html">workshop lab checklist</a>
+      ·
+      <a href="results.html">Projector results</a>
+    </p>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getFirestore, doc, onSnapshot, runTransaction
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    const errEl = document.getElementById("err");
+    const statusEl = document.getElementById("status");
+    const KEYS = ["match", "no_match", "walk_away"];
+    const LABELS = { match: "Match", no_match: "No match", walk_away: "Walk away" };
+
+    function showErr(msg) {
+      errEl.hidden = false;
+      errEl.textContent = msg;
+    }
+
+    let config;
+    try {
+      const cfgUrl = new URL("./firebase_config.json", window.location.href);
+      cfgUrl.searchParams.set("v", "3");
+      const res = await fetch(cfgUrl.toString(), { cache: "no-store" });
+      if (!res.ok) throw new Error("config HTTP " + res.status);
+      config = await res.json();
+      if (!config.apiKey || !config.projectId) throw new Error("config incomplete");
+      if (String(config.apiKey).includes("REPLACE")) throw new Error("config still placeholder");
+    } catch (e) {
+      showErr("Could not load Firebase config (" + (e && e.message ? e.message : e) + "). Hard-refresh.");
+      document.querySelectorAll("button.btn").forEach((b) => { b.disabled = true; });
+      throw e;
+    }
+
+    const app = initializeApp(config);
+    const db = getFirestore(app);
+    const sessionId = config.sessionId || "workshop-default";
+    const votedKey = `nitda_verdict_voted_${sessionId}`;
+
+    function paint(counts) {
+      const c = { match: 0, no_match: 0, walk_away: 0, ...(counts || {}) };
+      const total = KEYS.reduce((s, k) => s + (Number(c[k]) || 0), 0) || 1;
+      KEYS.forEach((k) => {
+        const row = document.querySelector(`.bar-row[data-k="${k}"]`);
+        const n = Number(c[k]) || 0;
+        row.querySelector(".n").textContent = String(n);
+        row.querySelector(".bar-fill").style.width = `${Math.round((n / total) * 100)}%`;
+      });
+    }
+
+    const counts = { match: 0, no_match: 0, walk_away: 0 };
+    KEYS.forEach((k) => {
+      onSnapshot(doc(db, "polls", sessionId, "counts", k), (snap) => {
+        counts[k] = snap.exists() ? Number(snap.data().n) || 0 : 0;
+        paint(counts);
+      });
+    });
+
+    if (localStorage.getItem(votedKey)) {
+      statusEl.textContent = "You already voted on this device. Watching live tally.";
+      document.querySelectorAll("button.btn").forEach((b) => { b.disabled = true; });
+    }
+
+    document.querySelectorAll("button.btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (localStorage.getItem(votedKey)) return;
+        const key = btn.getAttribute("data-v");
+        btn.disabled = true;
+        try {
+          const ref = doc(db, "polls", sessionId, "counts", key);
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            const n = snap.exists() ? Number(snap.data().n) || 0 : 0;
+            tx.set(ref, { n: n + 1 });
+          });
+          localStorage.setItem(votedKey, key);
+          statusEl.textContent = "Recorded: " + LABELS[key];
+          document.querySelectorAll("button.btn").forEach((b) => { b.disabled = true; });
+        } catch (e) {
+          btn.disabled = false;
+          showErr("Could not send vote. Check network, then try once more.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payee name demo — MADE-UP SAMPLE</title>
+  <style>
+    :root { --green: #079247; --ink: #111; --muted: #5a6870; --warn: #7a1f1f; }
+    body { margin: 0; font-family: Verdana, Geneva, sans-serif; background: #f3f9f5; color: var(--ink); }
+    .banner { background: var(--warn); color: #fff; text-align: center; padding: 0.55rem; font-weight: 700; font-size: 0.85rem; }
+    main { max-width: 560px; margin: 2rem auto; padding: 0 1rem; }
+    .phone {
+      background: #fff; border-radius: 18px; padding: 1.25rem; box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+      border: 1px solid #d5e5db;
+    }
+    h1 { font-size: 1.1rem; color: var(--green); margin: 0 0 1rem; }
+    .row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.65rem 0; border-bottom: 1px solid #e8eef2; }
+    .label { color: var(--muted); font-size: 0.85rem; }
+    .value { font-weight: 700; text-align: right; }
+    .mismatch { color: var(--warn); }
+    .ok { color: var(--green); }
+    .verdict {
+      margin-top: 1.25rem; padding: 0.9rem; background: #fff3f3; border-left: 4px solid var(--warn);
+      font-size: 0.95rem; line-height: 1.4;
+    }
+    a { color: var(--green); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="banner">MADE-UP PAYEE DEMO — not a real transfer screen</div>
+  <main>
+    <div class="phone">
+      <h1>Confirm recipient (demo)</h1>
+      <div class="row"><span class="label">You typed</span><span class="value">0247 000 0000</span></div>
+      <div class="row"><span class="label">Shop name on site</span><span class="value">Chickn King Accra</span></div>
+      <div class="row"><span class="label">Account name returned</span><span class="value mismatch">Kwame Mensah</span></div>
+      <div class="row"><span class="label">Name match?</span><span class="value mismatch">NO</span></div>
+      <div class="verdict">
+        Walk away. The padlock and the green badge do not fix a name mismatch.
+        In a real bank or mobile-money app, stop when confirm-recipient shows a different person.
+      </div>
+      <p style="margin-top:1.25rem"><a href="index.html">← Back to lab checklist</a></p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NITDA workshop lab — check before you pay</title>
+  <style>
+    :root { --green: #079247; --ink: #111; --muted: #5a6870; --soft: #e8f5ee; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Verdana, Geneva, sans-serif; color: var(--ink); background: #fff; }
+    header {
+      background: var(--green); color: #fff; padding: 1.1rem 1.25rem;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 0.35rem 0 0; opacity: 0.95; font-size: 0.9rem; }
+    main { max-width: 820px; margin: 0 auto; padding: 1.25rem; }
+    .warn {
+      background: #fff3f3; border-left: 4px solid #7a1f1f; padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+      font-size: 0.9rem; line-height: 1.45;
+    }
+    .step {
+      border: 1px solid #d5e5db; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 0.9rem;
+      background: #fbfdfc;
+    }
+    .step h2 { margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--green); }
+    .step p { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.92rem; line-height: 1.4; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    a.btn, button.btn {
+      display: inline-block; background: var(--green); color: #fff; border: 0; cursor: pointer;
+      text-decoration: none; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+      font-family: inherit;
+    }
+    a.btn.secondary { background: #fff; color: var(--green); border: 2px solid var(--green); }
+    .copybox {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.5rem 0 0.75rem;
+      background: var(--soft); padding: 0.55rem 0.7rem; border-radius: 8px; font-size: 0.85rem;
+    }
+    code { font-family: Consolas, monospace; word-break: break-all; }
+    .verdict {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;
+    }
+    .verdict button { width: 100%; }
+    #picked { margin-top: 0.75rem; font-weight: 700; color: var(--green); min-height: 1.2rem; }
+    footer { margin-top: 1.5rem; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Workshop lab — check before you pay</h1>
+    <p>For everyone in the room · NITDA cross-border fraud practical · made-up sample only</p>
+  </header>
+  <main>
+    <div class="warn">
+      You are on the shared lab page. Work on your own phone or laptop.
+      Read-only checks only. No attacks. No staging Trustmark URL.
+      Do not pay anyone from these pages.
+    </div>
+
+    <section class="step">
+      <h2>1. Open the lookalike shop</h2>
+      <p>Use a real browser page (not a slide photo). Note the address bar and the green picture badge.</p>
+      <div class="actions">
+        <a class="btn" href="lookalike_shop.html" target="_blank" rel="noopener">Open lookalike shop</a>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2>2. Check the URL (public tools)</h2>
+      <p>Copy the sample host, then open a public scanner. Paste it there. Record any warning.</p>
+      <div class="copybox">
+        <code id="sample-host">chickn-king-gh.example</code>
+        <button type="button" class="btn secondary" id="copy-host">Copy host</button>
+      </div>
+      <div class="actions">
+        <a class="btn" href="https://urlscan.io/" target="_blank" rel="noopener">Open urlscan.io</a>
+        <a class="btn" href="https://www.virustotal.com/gui/home/url" target="_blank" rel="noopener">Open VirusTotal URL</a>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2>3. Search a company register</h2>
+      <p>Compare the shop name to a public register. For Nigeria, use CAC public search. For other countries, use your home register.</p>
+      <div class="actions">
+        <a class="btn" href="https://search.cac.gov.ng/" target="_blank" rel="noopener">Open CAC public search</a>
+        <a class="btn secondary" href="lookalike_shop.html" target="_blank" rel="noopener">Re-open shop name</a>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2>4. Check payee name (demo)</h2>
+      <p>See a made-up confirm-recipient screen where the account name does not match the shop.</p>
+      <div class="actions">
+        <a class="btn" href="payee_demo.html" target="_blank" rel="noopener">Open payee mismatch demo</a>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2>5. Write your verdict</h2>
+      <p>One pick for the room. Facilitator collects a few answers aloud.</p>
+      <div class="verdict">
+        <button type="button" class="btn" data-v="Match">Match</button>
+        <button type="button" class="btn" data-v="No match">No match</button>
+        <button type="button" class="btn" data-v="Walk away">Walk away</button>
+      </div>
+      <div id="picked"></div>
+    </section>
+
+    <footer>
+      Built for the NITDA workshop deck. Public tool links only.
+      Guardrails stay on this page and in facilitator notes, not as a line cutting the PowerPoint title.
+    </footer>
+  </main>
+  <script>
+    const host = document.getElementById("sample-host");
+    document.getElementById("copy-host").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(host.textContent.trim());
+        document.getElementById("copy-host").textContent = "Copied";
+        setTimeout(() => { document.getElementById("copy-host").textContent = "Copy host"; }, 1200);
+      } catch (e) {
+        alert("Copy failed. Select the host text manually.");
+      }
+    });
+    document.querySelectorAll(".verdict button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.getElementById("picked").textContent = "Your verdict: " + btn.getAttribute("data-v");
+      });
+    });
+  </script>
+</body>
+</html>
