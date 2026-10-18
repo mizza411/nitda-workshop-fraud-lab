@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Verdict results — projector</title>
+  <title>Spot the shop results — projector</title>
+  <!-- Hard-refresh if tallies look stuck -->
   <style>
     :root { --green: #079247; --ink: #111; --muted: #5a6870; --soft: #e8f5ee; }
     body { margin: 0; font-family: Verdana, Geneva, sans-serif; background: #fff; color: var(--ink); }
@@ -22,12 +23,12 @@
 </head>
 <body>
   <header>
-    <h1>Live verdict</h1>
-    <p>Match · No match · Walk away</p>
+    <h1>Spot the shop</h1>
+    <p>Trust · Doubt · Walk away</p>
   </header>
   <main>
-    <div class="bar-row" data-k="match"><div class="bar-label"><span>Match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
-    <div class="bar-row" data-k="no_match"><div class="bar-label"><span>No match</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    <div class="bar-row" data-k="trust"><div class="bar-label"><span>Trust</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
+    <div class="bar-row" data-k="doubt"><div class="bar-label"><span>Doubt</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
     <div class="bar-row" data-k="walk_away"><div class="bar-label"><span>Walk away</span><span class="n">0</span></div><div class="bar-track"><div class="bar-fill"></div></div></div>
     <div id="total">Votes: 0</div>
     <p class="err" id="err" hidden></p>
@@ -37,7 +38,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-    const KEYS = ["match", "no_match", "walk_away"];
+    const KEYS = ["trust", "doubt", "walk_away"];
     const errEl = document.getElementById("err");
 
     let config;
@@ -57,8 +58,8 @@
 
     const app = initializeApp(config);
     const db = getFirestore(app);
-    const sessionId = config.sessionId || "workshop-default";
-    const counts = { match: 0, no_match: 0, walk_away: 0 };
+    const sessionId = config.sessionId || "workshop-spot-shop";
+    const counts = { trust: 0, doubt: 0, walk_away: 0 };
 
     function paint() {
       const total = KEYS.reduce((s, k) => s + (Number(counts[k]) || 0), 0);
